@@ -3,41 +3,18 @@ use actix_web::{get, put, web, HttpResponse};
 use crate::auth::AdminUser;
 use crate::db::DbPool;
 use crate::errors::AppError;
-use crate::models::setting::{Setting, UpdateSetting};
+use crate::services::admin_settings_service as svc;
 
 #[get("/settings")]
-pub async fn list_settings(
-    _admin: AdminUser,
-    pool: web::Data<DbPool>,
-) -> Result<HttpResponse, AppError> {
-    let rows = sqlx::query_as::<_, Setting>(
-        "SELECT key, value, updated_by, updated_at FROM app_settings ORDER BY key",
-    )
-    .fetch_all(pool.get_ref())
-    .await?;
+pub async fn list_settings(_admin: AdminUser, pool: web::Data<DbPool>) -> Result<HttpResponse, AppError> {
+    let rows = svc::list(pool.get_ref()).await?;
     Ok(HttpResponse::Ok().json(rows))
 }
 
 #[put("/settings/{key}")]
-pub async fn upsert_setting(
-    admin: AdminUser,
-    pool: web::Data<DbPool>,
-    path: web::Path<String>,
-    payload: web::Json<UpdateSetting>,
-) -> Result<HttpResponse, AppError> {
+pub async fn upsert_setting(admin: AdminUser, pool: web::Data<DbPool>, path: web::Path<String>, payload: web::Json<svc::UpdateSetting>) -> Result<HttpResponse, AppError> {
     let key = path.into_inner();
-    let value = payload.value.clone();
-    let row = sqlx::query_as::<_, Setting>(
-        r#"INSERT INTO app_settings (key, value, updated_by, updated_at)
-           VALUES ($1,$2,$3, now())
-           ON CONFLICT (key) DO UPDATE SET value=EXCLUDED.value, updated_by=EXCLUDED.updated_by, updated_at=now()
-           RETURNING key, value, updated_by, updated_at"#,
-    )
-    .bind(&key)
-    .bind(&value)
-    .bind(admin.0)
-    .fetch_one(pool.get_ref())
-    .await?;
+    let row = svc::upsert(pool.get_ref(), key, payload.value.clone(), admin.0).await?;
     Ok(HttpResponse::Ok().json(row))
 }
 

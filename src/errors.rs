@@ -14,6 +14,8 @@ pub enum AppError {
     NotFound(String),
     #[error("Conflict: {0}")]
     Conflict(String),
+    #[error("Too many requests: {0}")]
+    TooManyRequests(String),
     #[error("Database error: {0}")]
     Db(String),
     #[error("Internal server error")]
@@ -45,6 +47,7 @@ impl ResponseError for AppError {
             AppError::BadRequest(_) => StatusCode::BAD_REQUEST,
             AppError::NotFound(_) => StatusCode::NOT_FOUND,
             AppError::Conflict(_) => StatusCode::CONFLICT,
+            AppError::TooManyRequests(_) => StatusCode::TOO_MANY_REQUESTS,
             AppError::Db(_) => StatusCode::INTERNAL_SERVER_ERROR,
             AppError::Internal => StatusCode::INTERNAL_SERVER_ERROR,
         }
@@ -55,4 +58,3 @@ impl ResponseError for AppError {
         HttpResponse::build(self.status_code()).json(ErrorResponse { error: &msg })
     }
 }
-

@@ -41,8 +41,102 @@
 }
 ```
 - **Response**: Same as registration
+- **Note**: Requires OTP verification before login
 
-### 3. Get Current User Profile
+### 3. Request OTP Code
+- **Method**: `POST`
+- **URL**: `/api/auth/request-otp`
+- **Body** (JSON):
+```json
+{
+  "email": "john@example.com"
+}
+```
+- **Response**:
+```json
+{
+  "ok": true
+}
+```
+- **Note**: Sends OTP code via email (if SMTP configured) or logs to console
+
+### 4. Verify OTP Code
+- **Method**: `POST`
+- **URL**: `/api/auth/verify-otp`
+- **Body** (JSON):
+```json
+{
+  "email": "john@example.com",
+  "code": "123456"
+}
+```
+- **Response**:
+```json
+{
+  "verified": true
+}
+```
+- **Note**: Must verify OTP before login
+
+### 5. Google OAuth Login
+- **Method**: `POST`
+- **URL**: `/api/auth/google`
+- **Body** (JSON):
+```json
+{
+  "id_token": "google_id_token_here"
+}
+```
+- **Response**: Same as user login
+- **Note**: Requires GOOGLE_CLIENT_ID configured and OTP verification
+
+### 6. Forgot Password
+- **Method**: `POST`
+- **URL**: `/api/auth/forgot-password`
+- **Body** (JSON):
+```json
+{
+  "email": "john@example.com"
+}
+```
+- **Response**:
+```json
+{
+  "ok": true
+}
+```
+- **Note**: Sends password reset OTP code
+
+### 7. Reset Password
+- **Method**: `POST`
+- **URL**: `/api/auth/reset-password`
+- **Body** (JSON):
+```json
+{
+  "email": "john@example.com",
+  "code": "123456",
+  "new_password": "newpassword123"
+}
+```
+- **Response**:
+```json
+{
+  "reset": true
+}
+```
+
+### 8. Logout
+- **Method**: `POST`
+- **URL**: `/api/auth/logout`
+- **Headers**: `Authorization: Bearer <user_token>`
+- **Response**:
+```json
+{
+  "ok": true
+}
+```
+
+### 9. Get Current User Profile
 - **Method**: `GET`
 - **URL**: `/api/me`
 - **Headers**: `Authorization: Bearer <user_token>`
@@ -56,11 +150,18 @@
 }
 ```
 
+### 10. Delete Current User Account
+- **Method**: `DELETE`
+- **URL**: `/api/me`
+- **Headers**: `Authorization: Bearer <user_token>`
+- **Response**: `204 No Content`
+- **Note**: Permanently deletes user account and all associated data
+
 ---
 
 ## 📂 Category Endpoints
 
-### 4. List Categories
+### 11. List Categories
 - **Method**: `GET`
 - **URL**: `/api/categories`
 - **Headers**: `Authorization: Bearer <user_token>`
@@ -78,7 +179,7 @@
 ]
 ```
 
-### 5. Create Category
+### 12. Create Category
 - **Method**: `POST`
 - **URL**: `/api/categories`
 - **Headers**: `Authorization: Bearer <user_token>`
@@ -92,7 +193,7 @@
 ```
 - **Note**: `kind` must be either "income" or "expense", `color` is optional (defaults to "#888888")
 
-### 6. Update Category
+### 13. Update Category
 - **Method**: `PUT`
 - **URL**: `/api/categories/{category_id}`
 - **Headers**: `Authorization: Bearer <user_token>`
@@ -106,7 +207,7 @@
 ```
 - **Note**: All fields are optional
 
-### 7. Delete Category
+### 14. Delete Category
 - **Method**: `DELETE`
 - **URL**: `/api/categories/{category_id}`
 - **Headers**: `Authorization: Bearer <user_token>`
@@ -116,7 +217,7 @@
 
 ## 💰 Transaction Endpoints
 
-### 8. List Transactions
+### 15. List Transactions
 - **Method**: `GET`
 - **URL**: `/api/transactions`
 - **Headers**: `Authorization: Bearer <user_token>`
@@ -139,7 +240,7 @@
 ]
 ```
 
-### 9. Create Transaction
+### 16. Create Transaction
 - **Method**: `POST`
 - **URL**: `/api/transactions`
 - **Headers**: `Authorization: Bearer <user_token>`
@@ -153,7 +254,7 @@
 }
 ```
 
-### 10. Update Transaction
+### 17. Update Transaction
 - **Method**: `PUT`
 - **URL**: `/api/transactions/{transaction_id}`
 - **Headers**: `Authorization: Bearer <user_token>`
@@ -168,7 +269,7 @@
 ```
 - **Note**: All fields are optional
 
-### 11. Delete Transaction
+### 18. Delete Transaction
 - **Method**: `DELETE`
 - **URL**: `/api/transactions/{transaction_id}`
 - **Headers**: `Authorization: Bearer <user_token>`
@@ -178,7 +279,7 @@
 
 ## 📊 Summary Endpoints
 
-### 12. Monthly Summary
+### 19. Monthly Summary
 - **Method**: `GET`
 - **URL**: `/api/summary/month`
 - **Headers**: `Authorization: Bearer <user_token>`
@@ -215,7 +316,7 @@
 
 ## 👑 Admin Authentication Endpoints
 
-### 13. Admin Registration
+### 20. Admin Registration
 - **Method**: `POST`
 - **URL**: `/api/admin/auth/register`
 - **Body** (JSON):
@@ -229,7 +330,7 @@
 - **Note**: First admin can register without authentication. Subsequent admins need existing admin token.
 - **Headers** (for subsequent registrations): `Authorization: Bearer <admin_token>`
 
-### 14. Admin Login
+### 21. Admin Login
 - **Method**: `POST`
 - **URL**: `/api/admin/auth/login`
 - **Body** (JSON):
@@ -252,7 +353,7 @@
 }
 ```
 
-### 15. Get Current Admin Profile
+### 22. Get Current Admin Profile
 - **Method**: `GET`
 - **URL**: `/api/admin/me`
 - **Headers**: `Authorization: Bearer <admin_token>`
@@ -261,7 +362,7 @@
 
 ## 👥 Admin User Management Endpoints
 
-### 16. List All Users
+### 23. List All Users
 - **Method**: `GET`
 - **URL**: `/api/admin/users`
 - **Headers**: `Authorization: Bearer <admin_token>`
@@ -277,7 +378,7 @@
 ]
 ```
 
-### 17. Get User by ID
+### 24. Get User by ID
 - **Method**: `GET`
 - **URL**: `/api/admin/users/{user_id}`
 - **Headers**: `Authorization: Bearer <admin_token>`
@@ -291,7 +392,7 @@
 }
 ```
 
-### 18. Create User (Admin)
+### 25. Create User (Admin)
 - **Method**: `POST`
 - **URL**: `/api/admin/users`
 - **Headers**: `Authorization: Bearer <admin_token>`
@@ -304,7 +405,7 @@
 }
 ```
 
-### 19. Update User (Admin)
+### 26. Update User (Admin)
 - **Method**: `PUT`
 - **URL**: `/api/admin/users/{user_id}`
 - **Headers**: `Authorization: Bearer <admin_token>`
@@ -318,7 +419,7 @@
 ```
 - **Note**: All fields are optional
 
-### 20. Delete User (Admin)
+### 27. Delete User (Admin)
 - **Method**: `DELETE`
 - **URL**: `/api/admin/users/{user_id}`
 - **Headers**: `Authorization: Bearer <admin_token>`
@@ -328,7 +429,7 @@
 
 ## ⚙️ Admin Settings Endpoints
 
-### 21. List Application Settings
+### 28. List Application Settings
 - **Method**: `GET`
 - **URL**: `/api/admin/settings`
 - **Headers**: `Authorization: Bearer <admin_token>`
@@ -350,7 +451,7 @@
 ]
 ```
 
-### 22. Update/Create Setting
+### 29. Update/Create Setting
 - **Method**: `PUT`
 - **URL**: `/api/admin/settings/{setting_key}`
 - **Headers**: `Authorization: Bearer <admin_token>`
@@ -375,7 +476,7 @@
 
 ## 🏥 Health Check
 
-### 23. Health Check
+### 30. Health Check
 - **Method**: `GET`
 - **URL**: `/api/healthz`
 - **Response**:

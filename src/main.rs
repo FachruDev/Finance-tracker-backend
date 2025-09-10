@@ -2,8 +2,12 @@ mod auth;
 mod config;
 mod db;
 mod errors;
+mod dto;
+mod repositories;
+mod services;
 mod models;
 mod routes;
+mod mailer;
 
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};

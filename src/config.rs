@@ -8,6 +8,7 @@ pub struct AppConfig {
     pub jwt_secret: String,
     pub jwt_exp_hours: u64,
     pub cors_allowed_origins: Option<String>,
+    pub google_client_id: Option<String>,
 }
 
 impl AppConfig {
@@ -29,6 +30,7 @@ impl AppConfig {
             .and_then(|s| s.parse::<u64>().ok())
             .unwrap_or(24 * 7);
         let cors_allowed_origins = env::var("CORS_ALLOWED_ORIGINS").ok();
+        let google_client_id = env::var("GOOGLE_CLIENT_ID").ok();
 
         Self {
             app_host,
@@ -37,7 +39,7 @@ impl AppConfig {
             jwt_secret,
             jwt_exp_hours,
             cors_allowed_origins,
+            google_client_id,
         }
     }
 }
-

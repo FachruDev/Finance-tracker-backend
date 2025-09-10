@@ -9,6 +9,9 @@ pub struct User {
     pub name: String,
     pub email: String,
     pub password_hash: String,
+    pub auth_provider: String,
+    pub google_sub: Option<String>,
+    pub is_verified: bool,
     pub created_at: DateTime<Utc>,
 }
 
@@ -17,6 +20,7 @@ pub struct PublicUser {
     pub id: Uuid,
     pub name: String,
     pub email: String,
+    pub is_verified: bool,
     pub created_at: DateTime<Utc>,
 }
 
@@ -26,8 +30,8 @@ impl From<User> for PublicUser {
             id: u.id,
             name: u.name,
             email: u.email,
+            is_verified: u.is_verified,
             created_at: u.created_at,
         }
     }
 }
-

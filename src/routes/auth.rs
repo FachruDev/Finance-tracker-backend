@@ -1,107 +1,78 @@
-use actix_web::{post, get, web, HttpResponse};
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
-
-use crate::auth::{create_jwt, hash_password, verify_password};
+use actix_web::{get, post, web, HttpResponse};
 use crate::config::AppConfig;
 use crate::db::DbPool;
+use crate::dto::auth::*;
 use crate::errors::AppError;
-use crate::models::user::{PublicUser, User};
-
-#[derive(Debug, Deserialize)]
-pub struct RegisterRequest {
-    pub name: String,
-    pub email: String,
-    pub password: String,
-}
-
-#[derive(Debug, Deserialize)]
-pub struct LoginRequest {
-    pub email: String,
-    pub password: String,
-}
-
-#[derive(Debug, Serialize)]
-pub struct AuthResponse {
-    pub token: String,
-    pub user: PublicUser,
-}
+use crate::services::auth_service as svc;
 
 #[post("/auth/register")]
-pub async fn register(
-    pool: web::Data<DbPool>,
-    cfg: web::Data<AppConfig>,
-    payload: web::Json<RegisterRequest>,
-) -> Result<HttpResponse, AppError> {
-    let email = payload.email.trim().to_lowercase();
-    let hash = hash_password(&payload.password)?;
-    let id = Uuid::new_v4();
-
-    let rec = sqlx::query_as::<_, User>(
-        "INSERT INTO users (id, name, email, password_hash) VALUES ($1,$2,$3,$4)
-         RETURNING id, name, email, password_hash, created_at",
-    )
-    .bind(id)
-    .bind(&payload.name)
-    .bind(&email)
-    .bind(&hash)
-    .fetch_one(pool.get_ref())
-    .await
-    .map_err(|e| {
-        if let sqlx::Error::Database(db) = &e {
-            if db.is_unique_violation() {
-                return AppError::Conflict("Email already registered".into());
-            }
-        }
-        e.into()
-    })?;
-
-    let token = create_jwt(rec.id, &cfg)?;
-    Ok(HttpResponse::Ok().json(AuthResponse { token, user: rec.into() }))
+pub async fn register(pool: web::Data<DbPool>, cfg: web::Data<AppConfig>, payload: web::Json<RegisterRequest>) -> Result<HttpResponse, AppError> {
+    let res = svc::register(pool.get_ref(), cfg.get_ref(), payload.into_inner()).await?;
+    Ok(HttpResponse::Ok().json(res))
 }
 
 #[post("/auth/login")]
-pub async fn login(
-    pool: web::Data<DbPool>,
-    cfg: web::Data<AppConfig>,
-    payload: web::Json<LoginRequest>,
-) -> Result<HttpResponse, AppError> {
-    let email = payload.email.trim().to_lowercase();
-    let user = sqlx::query_as::<_, User>(
-        "SELECT id, name, email, password_hash, created_at FROM users WHERE email = $1",
-    )
-    .bind(&email)
-    .fetch_optional(pool.get_ref())
-    .await?;
-
-    let user = match user {
-        Some(u) => u,
-        None => return Err(AppError::Unauthorized),
-    };
-
-    if !verify_password(&payload.password, &user.password_hash)? {
-        return Err(AppError::Unauthorized);
-    }
-
-    let token = create_jwt(user.id, &cfg)?;
-    Ok(HttpResponse::Ok().json(AuthResponse { token, user: user.into() }))
+pub async fn login(pool: web::Data<DbPool>, cfg: web::Data<AppConfig>, payload: web::Json<LoginRequest>) -> Result<HttpResponse, AppError> {
+    let res = svc::login(pool.get_ref(), cfg.get_ref(), payload.into_inner()).await?;
+    Ok(HttpResponse::Ok().json(res))
 }
 
 #[get("/me")]
-pub async fn me(
-    pool: web::Data<DbPool>,
-    user: crate::auth::AuthUser,
-) -> Result<HttpResponse, AppError> {
-    let u = sqlx::query_as::<_, User>(
-        "SELECT id, name, email, password_hash, created_at FROM users WHERE id = $1",
-    )
-    .bind(user.0)
-    .fetch_one(pool.get_ref())
-    .await?;
+pub async fn me(pool: web::Data<DbPool>, user: crate::auth::AuthUser) -> Result<HttpResponse, AppError> {
+    let res = svc::me(pool.get_ref(), user.0).await?;
+    Ok(HttpResponse::Ok().json(res))
+}
 
-    Ok(HttpResponse::Ok().json(PublicUser::from(u)))
+#[actix_web::delete("/me")]
+pub async fn delete_me(pool: web::Data<DbPool>, user: crate::auth::AuthUser) -> Result<HttpResponse, AppError> {
+    svc::delete_me(pool.get_ref(), user.0).await?;
+    Ok(HttpResponse::NoContent().finish())
+}
+
+#[post("/auth/request-otp")]
+pub async fn request_otp(pool: web::Data<DbPool>, payload: web::Json<RequestOtpPayload>) -> Result<HttpResponse, AppError> {
+    svc::request_otp(pool.get_ref(), payload.into_inner()).await?;
+    Ok(HttpResponse::Ok().json(serde_json::json!({"ok": true})))
+}
+
+#[post("/auth/verify-otp")]
+pub async fn verify_otp(pool: web::Data<DbPool>, payload: web::Json<VerifyOtpPayload>) -> Result<HttpResponse, AppError> {
+    svc::verify_otp(pool.get_ref(), payload.into_inner()).await?;
+    Ok(HttpResponse::Ok().json(serde_json::json!({"verified": true})))
+}
+
+#[post("/auth/forgot-password")]
+pub async fn forgot_password(pool: web::Data<DbPool>, payload: web::Json<RequestOtpPayload>) -> Result<HttpResponse, AppError> {
+    svc::forgot_password(pool.get_ref(), payload.into_inner()).await?;
+    Ok(HttpResponse::Ok().json(serde_json::json!({"ok": true})))
+}
+
+#[post("/auth/reset-password")]
+pub async fn reset_password(pool: web::Data<DbPool>, payload: web::Json<ResetPasswordPayload>) -> Result<HttpResponse, AppError> {
+    svc::reset_password(pool.get_ref(), payload.into_inner()).await?;
+    Ok(HttpResponse::Ok().json(serde_json::json!({"reset": true})))
+}
+
+#[post("/auth/logout")]
+pub async fn logout(_user: crate::auth::AuthUser) -> Result<HttpResponse, AppError> {
+    Ok(HttpResponse::Ok().json(serde_json::json!({"ok": true})))
+}
+
+#[post("/auth/google")]
+pub async fn google_login(pool: web::Data<DbPool>, cfg: web::Data<AppConfig>, payload: web::Json<GoogleLoginRequest>) -> Result<HttpResponse, AppError> {
+    let res = svc::google_login(pool.get_ref(), cfg.get_ref(), payload.into_inner()).await?;
+    Ok(HttpResponse::Ok().json(res))
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {
-    cfg.service(register).service(login).service(me);
+    cfg.service(register)
+        .service(login)
+        .service(me)
+        .service(delete_me)
+        .service(request_otp)
+        .service(verify_otp)
+        .service(google_login)
+        .service(forgot_password)
+        .service(reset_password)
+        .service(logout);
 }
