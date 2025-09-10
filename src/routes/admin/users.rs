@@ -96,7 +96,7 @@ pub async fn update_user(
     .bind(id)
     .fetch_optional(pool.get_ref())
     .await?;
-    let mut current = match current.take() {
+    let current = match current.take() {
         Some(u) => u,
         None => return Err(AppError::NotFound("User not found".into())),
     };
@@ -149,4 +149,3 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(update_user)
         .service(delete_user);
 }
-

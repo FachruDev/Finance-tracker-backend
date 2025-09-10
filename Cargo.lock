@@ -814,7 +814,6 @@ dependencies = [
  "jsonwebtoken",
  "log",
  "password-hash",
- "rand_core 0.9.3",
  "rust_decimal",
  "serde",
  "serde_json",

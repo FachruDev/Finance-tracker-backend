@@ -85,7 +85,7 @@ pub async fn update_transaction(
     .fetch_optional(pool.get_ref())
     .await?;
 
-    let mut current = match current.take() {
+    let current = match current.take() {
         Some(t) => t,
         None => return Err(AppError::NotFound("Transaction not found".into())),
     };
@@ -150,4 +150,3 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(update_transaction)
         .service(delete_transaction);
 }
-

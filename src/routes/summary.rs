@@ -1,8 +1,7 @@
 use actix_web::{get, web, HttpResponse};
-use chrono::{Datelike, NaiveDate};
+use chrono::NaiveDate;
 use rust_decimal::Decimal;
 use serde::Serialize;
-use uuid::Uuid;
 
 use crate::auth::AuthUser;
 use crate::db::DbPool;
@@ -92,4 +91,3 @@ pub struct SummaryQuery {
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(monthly_summary);
 }
-

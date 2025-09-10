@@ -2,7 +2,7 @@ use actix_web::{post, get, web, HttpResponse};
 use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
-use crate::auth::{create_jwt, hash_password, verify_password, AuthUser};
+use crate::auth::{create_jwt, hash_password, verify_password};
 use crate::config::AppConfig;
 use crate::db::DbPool;
 use crate::errors::AppError;
@@ -105,4 +105,3 @@ pub async fn me(
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(register).service(login).service(me);
 }
-

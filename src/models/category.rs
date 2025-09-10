@@ -28,11 +28,10 @@ pub struct UpdateCategory {
     pub color: Option<String>,
 }
 
-#[derive(Debug, Serialize)]
+#[derive(Debug, Serialize, FromRow)]
 pub struct CategoryBreakdownItem {
     pub category_id: Uuid,
     pub name: String,
     pub kind: String,
     pub total: Decimal,
 }
-

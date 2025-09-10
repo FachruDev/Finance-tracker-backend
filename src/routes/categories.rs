@@ -77,7 +77,7 @@ pub async fn update_category(
     .fetch_optional(pool.get_ref())
     .await?;
 
-    let mut current = match current.take() {
+    let current = match current.take() {
         Some(c) => c,
         None => return Err(AppError::NotFound("Category not found".into())),
     };
@@ -134,4 +134,3 @@ pub fn config(cfg: &mut web::ServiceConfig) {
         .service(update_category)
         .service(delete_category);
 }
-

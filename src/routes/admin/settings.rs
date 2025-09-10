@@ -1,5 +1,4 @@
 use actix_web::{get, put, web, HttpResponse};
-use serde::Deserialize;
 
 use crate::auth::AdminUser;
 use crate::db::DbPool;
@@ -45,4 +44,3 @@ pub async fn upsert_setting(
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(list_settings).service(upsert_setting);
 }
-
