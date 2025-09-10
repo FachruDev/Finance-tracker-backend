@@ -3,7 +3,7 @@ use crate::auth::{hash_password, verify_password, create_jwt};
 use crate::config::AppConfig;
 use crate::db::DbPool;
 use crate::errors::AppError;
-use crate::models::admin::{Admin, PublicAdmin};
+use crate::models::admin::PublicAdmin;
 use crate::repositories::admin_repo as repo;
 
 #[derive(Debug, serde::Deserialize)]
@@ -38,4 +38,3 @@ pub async fn login(pool: &DbPool, cfg: &AppConfig, payload: AdminLoginRequest) -
 pub async fn me(pool: &DbPool, admin_id: Uuid) -> Result<PublicAdmin, AppError> {
     Ok(repo::get_by_id(pool, admin_id).await?.into())
 }
-

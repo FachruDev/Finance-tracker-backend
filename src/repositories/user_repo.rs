@@ -65,25 +65,9 @@ pub async fn link_google_sub(pool: &DbPool, id: Uuid, sub: &str) -> Result<User,
     Ok(u)
 }
 
-pub async fn set_verified(pool: &DbPool, id: Uuid) -> Result<(), AppError> {
-    sqlx::query("UPDATE users SET is_verified=true WHERE id=$1")
-        .bind(id)
-        .execute(pool)
-        .await?;
-    Ok(())
-}
-
-pub async fn set_password(pool: &DbPool, id: Uuid, password_hash: &str) -> Result<(), AppError> {
-    sqlx::query("UPDATE users SET password_hash=$1 WHERE id=$2")
-        .bind(password_hash)
-        .bind(id)
-        .execute(pool)
-        .await?;
-    Ok(())
-}
+// Note: set_verified and set_password moved into services.
 
 pub async fn delete_by_id(pool: &DbPool, id: Uuid) -> Result<u64, AppError> {
     let res = sqlx::query("DELETE FROM users WHERE id=$1").bind(id).execute(pool).await?;
     Ok(res.rows_affected())
 }
-

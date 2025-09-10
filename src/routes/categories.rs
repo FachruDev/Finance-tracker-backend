@@ -7,9 +7,6 @@ use crate::errors::AppError;
 use crate::dto::category::{CreateCategory, UpdateCategory};
 use crate::services::category_service as svc;
 
-fn validate_kind(kind: &str) -> bool {
-    matches!(kind, "income" | "expense")
-}
 
 #[get("/categories")]
 pub async fn list_categories(

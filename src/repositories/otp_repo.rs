@@ -2,7 +2,7 @@ use crate::db::DbPool;
 use crate::errors::AppError;
 use chrono::{DateTime, Utc};
 use uuid::Uuid;
-use sqlx::{self, Executor, Postgres};
+use sqlx::{self};
 
 pub async fn last_created_at(pool: &DbPool, user_id: Uuid, purpose: &str) -> Result<Option<DateTime<Utc>>, AppError> {
     let row: Option<(DateTime<Utc>,)> = sqlx::query_as(
@@ -42,13 +42,4 @@ pub async fn find_valid(pool: &DbPool, user_id: Uuid, code: &str, purpose: &str)
     Ok(row.map(|r| r.0))
 }
 
-pub async fn mark_used<'e, E>(exec: E, otp_id: Uuid) -> Result<(), AppError>
-where
-    E: Executor<'e, Database = Postgres>,
-{
-    sqlx::query("UPDATE user_otp_codes SET used_at = now() WHERE id=$1")
-        .bind(otp_id)
-        .execute(exec)
-        .await?;
-    Ok(())
-}
+// mark_used operation is inlined in service to simplify executor types.

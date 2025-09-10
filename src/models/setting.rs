@@ -1,5 +1,5 @@
 use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
+use serde::Serialize;
 use sqlx::FromRow;
 use uuid::Uuid;
 
@@ -11,8 +11,4 @@ pub struct Setting {
     pub updated_at: DateTime<Utc>,
 }
 
-#[derive(Debug, Deserialize)]
-pub struct UpdateSetting {
-    pub value: String,
-}
-
+// UpdateSetting DTO moved to services/admin_settings_service.rs

@@ -9,6 +9,7 @@ pub struct User {
     pub name: String,
     pub email: String,
     pub password_hash: String,
+    #[allow(dead_code)]
     pub auth_provider: String,
     pub google_sub: Option<String>,
     pub is_verified: bool,

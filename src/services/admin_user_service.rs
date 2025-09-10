@@ -34,7 +34,7 @@ pub async fn create(pool: &DbPool, payload: CreateUserReq) -> Result<PublicUser,
 }
 
 pub async fn update(pool: &DbPool, id: Uuid, payload: UpdateUserReq) -> Result<PublicUser, AppError> {
-    let mut current = repo::get_by_id(pool, id).await?;
+    let current = repo::get_by_id(pool, id).await?;
     let name = payload.name.unwrap_or(current.name);
     let email = payload.email.map(|e| e.trim().to_lowercase()).unwrap_or(current.email);
     let password_hash = if let Some(pw) = payload.password { hash_password(&pw)? } else { current.password_hash.clone() };
@@ -56,4 +56,3 @@ pub async fn delete(pool: &DbPool, id: Uuid) -> Result<(), AppError> {
     if affected == 0 { return Err(AppError::NotFound("User not found".into())); }
     Ok(())
 }
-
