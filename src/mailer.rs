@@ -2,6 +2,7 @@ use crate::db::DbPool;
 use crate::errors::AppError;
 use lettre::message::{header, Mailbox, Message};
 use lettre::{transport::smtp::authentication::Credentials, AsyncSmtpTransport, AsyncTransport, Tokio1Executor};
+use lettre::transport::smtp::client::{Tls, TlsParameters};
 
 // Reads SMTP settings from app_settings and sends an email.
 // Required keys: smtp_host, smtp_port, smtp_username, smtp_password, smtp_from, smtp_tls (optional: "true"/"false", default true)
@@ -32,11 +33,24 @@ pub async fn send_email(
 
     let creds = Credentials::new(username.clone(), password.clone());
     let mailer = if use_tls {
-        AsyncSmtpTransport::<Tokio1Executor>::relay(&host)
-            .map_err(|e| AppError::BadRequest(format!("SMTP relay error: {}", e)))?
-            .port(port)
-            .credentials(creds)
-            .build()
+        // Use STARTTLS by default (port 587). If port 465, use implicit TLS wrapper.
+        if port == 465 {
+            let tls = TlsParameters::builder(host.clone())
+                .build()
+                .map_err(|e| AppError::BadRequest(format!("SMTP TLS params error: {}", e)))?;
+            AsyncSmtpTransport::<Tokio1Executor>::relay(&host)
+                .map_err(|e| AppError::BadRequest(format!("SMTP relay error: {}", e)))?
+                .tls(Tls::Wrapper(tls))
+                .port(port)
+                .credentials(creds)
+                .build()
+        } else {
+            AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(&host)
+                .map_err(|e| AppError::BadRequest(format!("SMTP relay error: {}", e)))?
+                .port(port)
+                .credentials(creds)
+                .build()
+        }
     } else {
         AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&host)
             .port(port)

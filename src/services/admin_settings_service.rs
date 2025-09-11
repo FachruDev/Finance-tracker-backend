@@ -12,4 +12,3 @@ pub async fn list(pool: &DbPool) -> Result<Vec<Setting>, AppError> { repo::list_
 pub async fn upsert(pool: &DbPool, key: String, value: String, admin_id: Uuid) -> Result<Setting, AppError> {
     repo::upsert(pool, &key, &value, admin_id).await
 }
-

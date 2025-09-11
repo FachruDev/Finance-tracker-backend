@@ -20,5 +20,6 @@ pub async fn upsert_setting(admin: AdminUser, pool: web::Data<DbPool>, path: web
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {
-    cfg.service(list_settings).service(upsert_setting);
+    cfg.service(list_settings)
+       .service(upsert_setting);
 }
