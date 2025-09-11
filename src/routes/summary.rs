@@ -7,6 +7,7 @@ use crate::db::DbPool;
 use crate::errors::AppError;
 use crate::models::category::CategoryBreakdownItem;
 use crate::services::summary_service as svc;
+use crate::response as resp;
 
 #[derive(Debug, Serialize)]
 pub struct MonthlySummary {
@@ -25,7 +26,7 @@ pub async fn monthly_summary(
     query: web::Query<SummaryQuery>,
 ) -> Result<HttpResponse, AppError> {
     let res = svc::monthly_summary(pool.get_ref(), user.0, query.year, query.month).await?;
-    Ok(HttpResponse::Ok().json(res))
+    Ok(resp::ok(res))
 }
 
 #[derive(Debug,serde::Deserialize)]

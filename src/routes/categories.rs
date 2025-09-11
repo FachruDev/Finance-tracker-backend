@@ -6,6 +6,7 @@ use crate::db::DbPool;
 use crate::errors::AppError;
 use crate::dto::category::{CreateCategory, UpdateCategory};
 use crate::services::category_service as svc;
+use crate::response as resp;
 
 
 #[get("/categories")]
@@ -14,7 +15,7 @@ pub async fn list_categories(
     user: AuthUser,
 ) -> Result<HttpResponse, AppError> {
     let rows = svc::list(pool.get_ref(), user.0).await?;
-    Ok(HttpResponse::Ok().json(rows))
+    Ok(resp::ok(rows))
 }
 
 #[post("/categories")]
@@ -24,7 +25,7 @@ pub async fn create_category(
     payload: web::Json<CreateCategory>,
 ) -> Result<HttpResponse, AppError> {
     let row = svc::create(pool.get_ref(), user.0, payload.into_inner()).await?;
-    Ok(HttpResponse::Ok().json(row))
+    Ok(resp::created(row))
 }
 
 #[put("/categories/{id}")]
@@ -37,7 +38,7 @@ pub async fn update_category(
     let id = path.into_inner();
 
     let row = svc::update(pool.get_ref(), user.0, id, payload.into_inner()).await?;
-    Ok(HttpResponse::Ok().json(row))
+    Ok(resp::ok(row))
 }
 
 #[delete("/categories/{id}")]
@@ -48,7 +49,7 @@ pub async fn delete_category(
 ) -> Result<HttpResponse, AppError> {
     let id = path.into_inner();
     svc::delete(pool.get_ref(), user.0, id).await?;
-    Ok(HttpResponse::NoContent().finish())
+    Ok(resp::message("Category deleted"))
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {

@@ -35,8 +35,28 @@ impl From<jsonwebtoken::errors::Error> for AppError {
 }
 
 #[derive(Serialize)]
-struct ErrorResponse<'a> {
-    error: &'a str,
+struct ErrorBody {
+    code: &'static str,
+    message: String,
+}
+
+#[derive(Serialize)]
+struct ErrorResponse {
+    success: bool,
+    error: ErrorBody,
+}
+
+fn error_code(e: &AppError) -> &'static str {
+    match e {
+        AppError::Unauthorized => "UNAUTHORIZED",
+        AppError::Forbidden => "FORBIDDEN",
+        AppError::BadRequest(_) => "BAD_REQUEST",
+        AppError::NotFound(_) => "NOT_FOUND",
+        AppError::Conflict(_) => "CONFLICT",
+        AppError::TooManyRequests(_) => "TOO_MANY_REQUESTS",
+        AppError::Db(_) => "DB_ERROR",
+        AppError::Internal => "INTERNAL",
+    }
 }
 
 impl ResponseError for AppError {
@@ -55,6 +75,7 @@ impl ResponseError for AppError {
 
     fn error_response(&self) -> HttpResponse {
         let msg = self.to_string();
-        HttpResponse::build(self.status_code()).json(ErrorResponse { error: &msg })
+        let body = ErrorResponse { success: false, error: ErrorBody { code: error_code(self), message: msg } };
+        HttpResponse::build(self.status_code()).json(body)
     }
 }

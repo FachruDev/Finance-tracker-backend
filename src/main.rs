@@ -8,6 +8,7 @@ mod services;
 mod models;
 mod routes;
 mod mailer;
+mod response;
 
 use actix_cors::Cors;
 use actix_web::{web, App, HttpServer};

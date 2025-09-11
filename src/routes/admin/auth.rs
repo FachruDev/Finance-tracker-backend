@@ -4,6 +4,7 @@ use crate::config::AppConfig;
 use crate::db::DbPool;
 use crate::errors::AppError;
 use crate::services::admin_auth_service as svc;
+use crate::response as resp;
 
 // Bootstrap rule: if no admin exists, allow first registration without auth; otherwise require admin auth
 #[post("/auth/register")]
@@ -14,7 +15,7 @@ pub async fn register_admin(
     maybe_admin: Option<AdminUser>,
 ) -> Result<HttpResponse, AppError> {
     let res = svc::register(pool.get_ref(), cfg.get_ref(), payload.into_inner(), maybe_admin.is_some()).await?;
-    Ok(HttpResponse::Ok().json(res))
+    Ok(resp::created(res))
 }
 
 #[post("/auth/login")]
@@ -24,7 +25,7 @@ pub async fn login_admin(
     payload: web::Json<svc::AdminLoginRequest>,
 ) -> Result<HttpResponse, AppError> {
     let res = svc::login(pool.get_ref(), cfg.get_ref(), payload.into_inner()).await?;
-    Ok(HttpResponse::Ok().json(res))
+    Ok(resp::ok(res))
 }
 
 #[get("/me")]
@@ -33,7 +34,7 @@ pub async fn me_admin(
     admin: AdminUser,
 ) -> Result<HttpResponse, AppError> {
     let a = svc::me(pool.get_ref(), admin.0).await?;
-    Ok(HttpResponse::Ok().json(a))
+    Ok(resp::ok(a))
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {

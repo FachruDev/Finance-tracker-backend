@@ -1,11 +1,11 @@
-use actix_web::{get, HttpResponse, Responder, web};
+use actix_web::{get, Responder, web};
+use crate::response as resp;
 
 #[get("/healthz")]
 async fn health() -> impl Responder {
-    HttpResponse::Ok().json(serde_json::json!({"status":"ok"}))
+    resp::message("ok")
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {
     cfg.service(health);
 }
-

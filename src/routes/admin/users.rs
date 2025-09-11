@@ -5,6 +5,7 @@ use crate::auth::AdminUser;
 use crate::db::DbPool;
 use crate::errors::AppError;
 use crate::services::admin_user_service as svc;
+use crate::response as resp;
 
 #[get("/users")]
 pub async fn list_users(
@@ -12,7 +13,7 @@ pub async fn list_users(
     pool: web::Data<DbPool>,
 ) -> Result<HttpResponse, AppError> {
     let rows = svc::list(pool.get_ref()).await?;
-    Ok(HttpResponse::Ok().json(rows))
+    Ok(resp::ok(rows))
 }
 
 #[get("/users/{id}")]
@@ -23,7 +24,7 @@ pub async fn get_user(
 ) -> Result<HttpResponse, AppError> {
     let id = path.into_inner();
     let u = svc::get(pool.get_ref(), id).await?;
-    Ok(HttpResponse::Ok().json(u))
+    Ok(resp::ok(u))
 }
 
 #[post("/users")]
@@ -33,7 +34,7 @@ pub async fn create_user(
     payload: web::Json<svc::CreateUserReq>,
 ) -> Result<HttpResponse, AppError> {
     let rec = svc::create(pool.get_ref(), payload.into_inner()).await?;
-    Ok(HttpResponse::Ok().json(rec))
+    Ok(resp::created(rec))
 }
 
 #[put("/users/{id}")]
@@ -45,7 +46,7 @@ pub async fn update_user(
 ) -> Result<HttpResponse, AppError> {
     let id = path.into_inner();
     let rec = svc::update(pool.get_ref(), id, payload.into_inner()).await?;
-    Ok(HttpResponse::Ok().json(rec))
+    Ok(resp::ok(rec))
 }
 
 #[delete("/users/{id}")]
@@ -56,7 +57,7 @@ pub async fn delete_user(
 ) -> Result<HttpResponse, AppError> {
     let id = path.into_inner();
     svc::delete(pool.get_ref(), id).await?;
-    Ok(HttpResponse::NoContent().finish())
+    Ok(resp::message("User deleted"))
 }
 
 pub fn config(cfg: &mut web::ServiceConfig) {
