@@ -2,6 +2,34 @@
 
 **Base URL**: `http://127.0.0.1:8080/api`
 
+## 📋 **Standardized Response Format**
+
+All API responses follow a consistent format for better client-side handling:
+
+### Success Responses
+```json
+{
+  "success": true,
+  "data": { /* actual data */ }
+}
+```
+
+### Message Responses
+```json
+{
+  "success": true,
+  "message": "Operation completed successfully"
+}
+```
+
+### Error Responses
+```json
+{
+  "success": false,
+  "error": "Error message description"
+}
+```
+
 ---
 
 ## 🔐 Authentication Endpoints
@@ -20,12 +48,15 @@
 - **Response**:
 ```json
 {
-  "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
-  "user": {
-    "id": "550e8400-e29b-41d4-a716-446655440000",
-    "name": "John Doe",
-    "email": "john@example.com",
-    "created_at": "2025-09-10T10:00:00Z"
+  "success": true,
+  "data": {
+    "token": "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9...",
+    "user": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "John Doe",
+      "email": "john@example.com",
+      "created_at": "2025-09-10T10:00:00Z"
+    }
   }
 }
 ```
@@ -55,7 +86,8 @@
 - **Response**:
 ```json
 {
-  "ok": true
+  "success": true,
+  "message": "OTP sent"
 }
 ```
 - **Note**: Sends OTP code via email (if SMTP configured) or logs to console
@@ -73,7 +105,8 @@
 - **Response**:
 ```json
 {
-  "verified": true
+  "success": true,
+  "message": "Verified"
 }
 ```
 - **Note**: Must verify OTP before login
@@ -102,7 +135,8 @@
 - **Response**:
 ```json
 {
-  "ok": true
+  "success": true,
+  "message": "Reset OTP sent"
 }
 ```
 - **Note**: Sends password reset OTP code
@@ -121,7 +155,8 @@
 - **Response**:
 ```json
 {
-  "reset": true
+  "success": true,
+  "message": "Password reset"
 }
 ```
 
@@ -132,7 +167,8 @@
 - **Response**:
 ```json
 {
-  "ok": true
+  "success": true,
+  "message": "Logged out"
 }
 ```
 
@@ -143,10 +179,13 @@
 - **Response**:
 ```json
 {
-  "id": "550e8400-e29b-41d4-a716-446655440000",
-  "name": "John Doe",
-  "email": "john@example.com",
-  "created_at": "2025-09-10T10:00:00Z"
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "name": "John Doe",
+    "email": "john@example.com",
+    "created_at": "2025-09-10T10:00:00Z"
+  }
 }
 ```
 
@@ -154,7 +193,13 @@
 - **Method**: `DELETE`
 - **URL**: `/api/me`
 - **Headers**: `Authorization: Bearer <user_token>`
-- **Response**: `204 No Content`
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Account deleted"
+}
+```
 - **Note**: Permanently deletes user account and all associated data
 
 ---
@@ -167,16 +212,19 @@
 - **Headers**: `Authorization: Bearer <user_token>`
 - **Response**:
 ```json
-[
-  {
-    "id": "550e8400-e29b-41d4-a716-446655440001",
-    "user_id": "550e8400-e29b-41d4-a716-446655440000",
-    "name": "Salary",
-    "kind": "income",
-    "color": "#00ff00",
-    "created_at": "2025-09-10T10:00:00Z"
-  }
-]
+{
+  "success": true,
+  "data": [
+    {
+      "id": "550e8400-e29b-41d4-a716-446655440001",
+      "user_id": "550e8400-e29b-41d4-a716-446655440000",
+      "name": "Salary",
+      "kind": "income",
+      "color": "#00ff00",
+      "created_at": "2025-09-10T10:00:00Z"
+    }
+  ]
+}
 ```
 
 ### 12. Create Category
@@ -211,7 +259,13 @@
 - **Method**: `DELETE`
 - **URL**: `/api/categories/{category_id}`
 - **Headers**: `Authorization: Bearer <user_token>`
-- **Response**: `204 No Content`
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Category deleted"
+}
+```
 
 ---
 
@@ -273,7 +327,13 @@
 - **Method**: `DELETE`
 - **URL**: `/api/transactions/{transaction_id}`
 - **Headers**: `Authorization: Bearer <user_token>`
-- **Response**: `204 No Content`
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "Transaction deleted"
+}
+```
 
 ---
 
@@ -423,7 +483,13 @@
 - **Method**: `DELETE`
 - **URL**: `/api/admin/users/{user_id}`
 - **Headers**: `Authorization: Bearer <admin_token>`
-- **Response**: `204 No Content`
+- **Response**:
+```json
+{
+  "success": true,
+  "message": "User deleted"
+}
+```
 
 ---
 
@@ -441,6 +507,18 @@
     "value": "Finance Tracker",
     "updated_by": "550e8400-e29b-41d4-a716-446655440000",
     "updated_at": "2025-09-10T10:00:00Z"
+  },
+  {
+    "key": "google_client_id",
+    "value": "123456789-abcdefghijk.apps.googleusercontent.com",
+    "updated_by": "550e8400-e29b-41d4-a716-446655440000",
+    "updated_at": "2025-09-10T10:10:00Z"
+  },
+  {
+    "key": "smtp_host",
+    "value": "smtp.gmail.com",
+    "updated_by": "550e8400-e29b-41d4-a716-446655440000",
+    "updated_at": "2025-09-10T09:45:00Z"
   },
   {
     "key": "max_categories_per_user",
@@ -472,6 +550,22 @@
 ```
 - **Note**: This is an upsert operation (creates if doesn't exist, updates if exists)
 
+**🔧 Google OAuth Configuration Example:**
+```
+PUT /api/admin/settings/google_client_id
+{
+  "value": "123456789-abcdefghijk.apps.googleusercontent.com"
+}
+```
+
+**📧 SMTP Configuration Examples:**
+```
+PUT /api/admin/settings/smtp_host        { "value": "smtp.gmail.com" }
+PUT /api/admin/settings/smtp_port        { "value": "587" }
+PUT /api/admin/settings/smtp_username    { "value": "your-email@gmail.com" }
+PUT /api/admin/settings/smtp_password    { "value": "your-app-password" }
+```
+
 ---
 
 ## 🏥 Health Check
@@ -482,7 +576,8 @@
 - **Response**:
 ```json
 {
-  "status": "ok"
+  "success": true,
+  "message": "ok"
 }
 ```
 
@@ -501,6 +596,34 @@ All endpoints may return these error status codes:
 Error response format:
 ```json
 {
+  "success": false,
   "error": "Error message description"
 }
 ```
+
+**Note**: Error responses now also follow the standardized format with `success: false`
+
+---
+
+## 🎯 **API Standardization Features**
+
+### Response Format Consistency
+All endpoints now return responses in a standardized format:
+- **Success with data**: `{ "success": true, "data": {...} }`
+- **Success with message**: `{ "success": true, "message": "..." }`
+- **Error responses**: `{ "success": false, "error": "..." }`
+- **Created responses**: Use HTTP 201 status with `{ "success": true, "data": {...} }`
+
+### Code Organization Improvements
+- **DTOs (Data Transfer Objects)**: Separate validation and type safety
+- **Service Layer**: Business logic abstracted from routes
+- **Response Helper**: Centralized response formatting (`resp::ok()`, `resp::created()`, `resp::message()`)
+- **Import Standardization**: Cleaner imports using service modules
+- **Error Handling**: Consistent error format across all endpoints
+
+### Benefits of Standardization
+- **Client-side Parsing**: Easier to handle responses on frontend
+- **Type Safety**: Better TypeScript/JavaScript integration
+- **Debugging**: Consistent error format helps debugging
+- **Maintainability**: Cleaner code structure and separation of concerns
+- **Testing**: Predictable response format for automated tests
