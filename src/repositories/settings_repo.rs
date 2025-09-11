@@ -27,3 +27,11 @@ pub async fn upsert(pool: &DbPool, key: &str, value: &str, admin_id: Uuid) -> Re
     Ok(row)
 }
 
+pub async fn get_value(pool: &DbPool, key: &str) -> Result<Option<String>, AppError> {
+    let row: Option<(String,)> = sqlx::query_as("SELECT value FROM app_settings WHERE key=$1")
+        .bind(key)
+        .fetch_optional(pool)
+        .await?;
+    Ok(row.map(|r| r.0))
+}
+

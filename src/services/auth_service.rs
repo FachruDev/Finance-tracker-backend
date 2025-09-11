@@ -8,7 +8,7 @@ use crate::dto::auth::{AuthResponse, GoogleLoginRequest, LoginRequest, RegisterR
 use crate::errors::AppError;
 use crate::mailer;
 use crate::models::user::PublicUser;
-use crate::repositories::{otp_repo, user_repo};
+use crate::repositories::{otp_repo, user_repo, settings_repo};
 use crate::services::google;
 use rand::Rng;
 
@@ -137,15 +137,42 @@ pub async fn reset_password(pool: &DbPool, payload: ResetPasswordPayload) -> Res
 }
 
 pub async fn google_login(pool: &DbPool, cfg: &AppConfig, req: GoogleLoginRequest) -> Result<AuthResponse<PublicUser>, AppError> {
-    let client_id = cfg.google_client_id.clone().ok_or_else(|| AppError::BadRequest("GOOGLE_CLIENT_ID not configured".into()))?;
+    // Prefer env, fallback to app_settings
+    let client_id = if let Some(id) = cfg.google_client_id.clone() {
+        id
+    } else {
+        settings_repo::get_value(pool, "google_client_id")
+            .await?
+            .ok_or_else(|| AppError::BadRequest("GOOGLE_CLIENT_ID not configured".into()))?
+    };
     let g = google::verify_id_token(&client_id, &req.id_token).await?;
     let email = g.email.to_lowercase();
     let existing = user_repo::get_by_email(pool, &email).await?;
     let user = if let Some(u) = existing {
-        if u.google_sub.is_none() { user_repo::link_google_sub(pool, u.id, &g.sub).await? } else { u }
+        let mut u2 = if u.google_sub.is_none() { user_repo::link_google_sub(pool, u.id, &g.sub).await? } else { u };
+        if !u2.is_verified && g.email_verified {
+            sqlx::query("UPDATE users SET is_verified=true WHERE id=$1")
+                .bind(u2.id)
+                .execute(pool)
+                .await
+                .map_err(|e| AppError::Db(e.to_string()))?;
+            // reload minimal fields
+            u2 = user_repo::get_by_id(pool, u2.id).await?;
+        }
+        u2
     } else {
         let id = Uuid::new_v4();
-        user_repo::insert_google(pool, id, &g.name, &email, &g.sub).await?
+        // create unverified then optionally verify if Google asserts email_verified
+        let mut created = user_repo::insert_google(pool, id, &g.name, &email, &g.sub).await?;
+        if g.email_verified {
+            sqlx::query("UPDATE users SET is_verified=true WHERE id=$1")
+                .bind(created.id)
+                .execute(pool)
+                .await
+                .map_err(|e| AppError::Db(e.to_string()))?;
+            created = user_repo::get_by_id(pool, created.id).await?;
+        }
+        created
     };
     if !user.is_verified { return Err(AppError::Forbidden); }
     let token = create_jwt(user.id, cfg)?;
