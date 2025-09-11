@@ -13,11 +13,17 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn from_env() -> Self {
-        let app_host = env::var("APP_HOST").unwrap_or_else(|_| "127.0.0.1".to_string());
+        // Heroku exposes PORT
+        let heroku_port = env::var("PORT").ok().and_then(|s| s.parse::<u16>().ok());
         let app_port = env::var("APP_PORT")
             .ok()
             .and_then(|s| s.parse::<u16>().ok())
+            .or(heroku_port)
             .unwrap_or(8080);
+        let app_host = env::var("APP_HOST").unwrap_or_else(|_| {
+            // For Heroku (PORT set), bind to 0.0.0.0; else default to localhost
+            if std::env::var("PORT").is_ok() { "0.0.0.0".to_string() } else { "127.0.0.1".to_string() }
+        });
         let database_url = env::var("DATABASE_URL")
             .expect("DATABASE_URL must be set (e.g., postgres://user:pass@localhost/db)");
         let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| {
