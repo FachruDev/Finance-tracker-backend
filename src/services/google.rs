@@ -7,9 +7,10 @@ pub struct GoogleUser {
     pub email: String,
     pub name: String,
     pub email_verified: bool,
+    pub aud: String,
 }
 
-pub async fn verify_id_token(client_id: &str, id_token: &str) -> Result<GoogleUser, AppError> {
+pub async fn verify_id_token(id_token: &str) -> Result<GoogleUser, AppError> {
     #[derive(Deserialize)]
     struct TokenInfo {
         aud: String,
@@ -35,9 +36,6 @@ pub async fn verify_id_token(client_id: &str, id_token: &str) -> Result<GoogleUs
         .json()
         .await
         .map_err(|e| AppError::BadRequest(format!("invalid tokeninfo response: {}", e)))?;
-    if info.aud != client_id {
-        return Err(AppError::BadRequest(format!("aud mismatch: expected {}, got {}", client_id, info.aud)));
-    }
     let email_verified = match info.email_verified.as_deref() {
         Some("true") | Some("True") | Some("1") => true,
         _ => true, 
@@ -47,6 +45,6 @@ pub async fn verify_id_token(client_id: &str, id_token: &str) -> Result<GoogleUs
         email: info.email.ok_or_else(|| AppError::BadRequest("Email not present in token".into()))?,
         name: info.name.unwrap_or_else(|| "User".to_string()),
         email_verified,
+        aud: info.aud,
     })
 }
-

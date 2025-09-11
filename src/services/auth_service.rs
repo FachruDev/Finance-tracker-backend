@@ -137,15 +137,25 @@ pub async fn reset_password(pool: &DbPool, payload: ResetPasswordPayload) -> Res
 }
 
 pub async fn google_login(pool: &DbPool, cfg: &AppConfig, req: GoogleLoginRequest) -> Result<AuthResponse<PublicUser>, AppError> {
-    // Prefer env, fallback to app_settings
-    let client_id = if let Some(id) = cfg.google_client_id.clone() {
-        id
-    } else {
-        settings_repo::get_value(pool, "google_client_id")
-            .await?
-            .ok_or_else(|| AppError::BadRequest("GOOGLE_CLIENT_ID not configured".into()))?
-    };
-    let g = google::verify_id_token(&client_id, &req.id_token).await?;
+    // Load allowed client_ids: env GOOGLE_CLIENT_ID (can be comma-separated),
+    // plus app_settings google_client_id and/or google_client_ids
+    let mut allowed: Vec<String> = Vec::new();
+    if let Some(s) = cfg.google_client_id.clone() { allowed.push(s); }
+    if let Some(s) = settings_repo::get_value(pool, "google_client_id").await? { allowed.push(s); }
+    if let Some(s) = settings_repo::get_value(pool, "google_client_ids").await? { allowed.push(s); }
+    let allowed: Vec<String> = allowed
+        .into_iter()
+        .flat_map(|v| v.split(',').map(|x| x.trim().to_string()).collect::<Vec<_>>())
+        .filter(|s| !s.is_empty())
+        .collect();
+    if allowed.is_empty() {
+        return Err(AppError::BadRequest("GOOGLE_CLIENT_ID not configured".into()));
+    }
+
+    let g = google::verify_id_token(&req.id_token).await?;
+    if !allowed.iter().any(|id| id == &g.aud) {
+        return Err(AppError::BadRequest(format!("aud mismatch: expected one of [{}], got {}", allowed.join(","), g.aud)));
+    }
     let email = g.email.to_lowercase();
     let existing = user_repo::get_by_email(pool, &email).await?;
     let user = if let Some(u) = existing {
