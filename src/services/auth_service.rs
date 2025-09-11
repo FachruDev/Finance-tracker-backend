@@ -26,6 +26,16 @@ pub async fn register(pool: &DbPool, cfg: &AppConfig, payload: RegisterRequest) 
             AppError::Db(s) if s.contains("unique") => AppError::Conflict("Email already registered".into()),
             other => other,
         })?;
+    // Auto-send OTP after register 
+    let code = generate_otp_code();
+    let expires_at = Utc::now() + Duration::minutes(10);
+    if let Err(e) = otp_repo::create(pool, rec.id, &code, "verify", expires_at).await {
+        log::warn!("Failed to store OTP for {}: {}", email, e);
+    } else if let Err(e) = mailer::send_otp(pool, &email, &code).await {
+        log::warn!("SMTP failed for {}: {} (code {})", email, e, code);
+    } else {
+        log::info!("OTP sent to {} on register", email);
+    }
     let token = create_jwt(rec.id, cfg)?;
     Ok(AuthResponse { token, user: rec.into() })
 }
