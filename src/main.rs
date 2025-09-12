@@ -22,7 +22,9 @@ async fn main() -> std::io::Result<()> {
     env_logger::init();
 
     let cfg = AppConfig::from_env();
-    let addr: SocketAddr = format!("{}:{}", cfg.app_host, cfg.app_port)
+    // If running on Heroku (PORT is set), force bind to 0.0.0.0
+    let bind_host = if std::env::var("PORT").is_ok() { "0.0.0.0" } else { cfg.app_host.as_str() };
+    let addr: SocketAddr = format!("{}:{}", bind_host, cfg.app_port)
         .parse()
         .expect("invalid host/port");
 
